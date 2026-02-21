@@ -17,6 +17,19 @@ model User {
   updatedAt DateTime @updatedAt
 }
 
+model Product {
+  id        String   @id @default(cuid())
+  name      String
+  sku       String   @unique
+  price     Int      // harga jual
+  cost      Int      // harga modal
+  stock     Int      @default(0)
+  isActive  Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 enum UserRole {
   OWNER
   STAFF
