@@ -7,31 +7,56 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  password  String
-  role      UserRole @default(STAFF)
+  id             String           @id @default(cuid())
+  name           String
+  email          String           @unique
+  password       String
+  role           UserRole         @default(STAFF)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  stockMovements StockMovement[]
+
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
 }
 
 model Product {
-  id        String   @id @default(cuid())
-  name      String
-  sku       String   @unique
-  price     Int      // harga jual
-  cost      Int      // harga modal
-  stock     Int      @default(0)
-  isActive  Boolean  @default(true)
+  id             String           @id @default(cuid())
+  name           String
+  sku            String           @unique
+  price          Int
+  cost           Int
+  stock          Int              @default(0)
+  isActive       Boolean          @default(true)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  stockMovements StockMovement[]
+
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+}
+
+model StockMovement {
+  id         String   @id @default(cuid())
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id])
+
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+
+  type       MovementType
+  quantity   Int
+  note       String?
+
+  createdAt  DateTime @default(now())
 }
 
 enum UserRole {
   OWNER
   STAFF
   CASHIER
+}
+
+enum MovementType {
+  IN
+  OUT
+  ADJUSTMENT
 }
