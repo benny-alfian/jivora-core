@@ -4,10 +4,14 @@ export class ProductService {
   static async create(data: {
     name: string;
     price: number;
-    stock: number;
+    stock?: number;
   }) {
     return prisma.product.create({
-      data,
+      data: {
+        name: data.name,
+        price: data.price,
+        stock: data.stock ?? 0,
+      },
     });
   }
 
@@ -17,20 +21,19 @@ export class ProductService {
     });
   }
 
-  static async findById(id: string) {
-    return prisma.product.findUnique({
+  static async update(
+    id: string,
+    data: { name?: string; price?: number; stock?: number }
+  ) {
+    return prisma.product.update({
       where: { id },
+      data,
     });
   }
 
-  static async updateStock(id: string, quantity: number) {
-    return prisma.product.update({
+  static async delete(id: string) {
+    return prisma.product.delete({
       where: { id },
-      data: {
-        stock: {
-          increment: quantity,
-        },
-      },
     });
   }
 }

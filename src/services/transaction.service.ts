@@ -1,17 +1,25 @@
 import { prisma } from "../lib/prisma";
 import { MovementType } from "@prisma/client";
 
+interface TransactionInput {
+  userId: string;
+  items: {
+    productId: string;
+    quantity: number;
+  }[];
+}
+
 export class TransactionService {
-  static async createTransaction(data: {
-    userId: string;
-    items: {
-      productId: string;
-      quantity: numb4er;
-      price: number;
-    }[];
-  }) {
+  static async create(data: TransactionInput) {
     return prisma.$transaction(async (tx) => {
       let total = 0;
+
+      const transaction = await tx.transaction.create({
+        data: {
+          userId: data.userId,
+          total: 0,
+        },
+      });
 
       for (const item of data.items) {
         const product = await tx.product.findUnique({
@@ -23,14 +31,24 @@ export class TransactionService {
         }
 
         if (product.stock < item.quantity) {
-          throw new Error("Insufficient stock");
+          throw new Error(`Stock not enough for ${product.name}`);
         }
 
-        total += item.quantity * item.price;
+        const subtotal = product.price * item.quantity;
+        total += subtotal;
 
-        // Reduce stock
+        await tx.transactionItem.create({
+          data: {
+            transactionId: transaction.id,
+            productId: product.id,
+            quantity: item.quantity,
+            price: product.price,
+            subtotal,
+          },
+        });
+
         await tx.product.update({
-          where: { id: item.productId },
+          where: { id: product.id },
           data: {
             stock: {
               decrement: item.quantity,
@@ -38,29 +56,20 @@ export class TransactionService {
           },
         });
 
-        // Record stock movement
         await tx.stockMovement.create({
           data: {
-            productId: item.productId,
+            productId: product.id,
             userId: data.userId,
-            quantity: item.quantity,
             type: MovementType.OUT,
+            quantity: item.quantity,
+            note: `Transaction ${transaction.id}`,
           },
         });
       }
 
-      // Create transaction
-      const transaction = await tx.transaction.create({
-        data: {
-          userId: data.userId,
-          total,
-          items: {
-            create: data.items,
-          },
-        },
-        include: {
-          items: true,
-        },
+      await tx.transaction.update({
+        where: { id: transaction.id },
+        data: { total },
       });
 
       return transaction;

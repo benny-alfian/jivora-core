@@ -7,81 +7,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id             String           @id @default(cuid())
-  name           String
-  email          String           @unique
-  password       String
-  role           UserRole         @default(STAFF)
-
-  stockMovements StockMovement[]
-  transactions   Transaction[]
-
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-}
-
-model Transaction {
-  id          String            @id @default(cuid())
-  userId      String
-  user        User              @relation(fields: [userId], references: [id])
-
-  totalAmount Int
-  status      TransactionStatus @default(COMPLETED)
-
-  items       TransactionItem[]
-
-  createdAt   DateTime          @default(now())
-}
-
-model TransactionItem {
-  id            String      @id @default(cuid())
-  transactionId String
-  transaction   Transaction @relation(fields: [transactionId], references: [id])
-
-  productId     String
-  product       Product     @relation(fields: [productId], references: [id])
-
-  quantity      Int
-  price         Int
-  subtotal      Int
-}
-
-model Product {
-  id               String             @id @default(cuid())
-  name             String
-  sku              String             @unique
-  price            Int
-  cost             Int
-  stock            Int                @default(0)
-  isActive         Boolean            @default(true)
-
-  stockMovements   StockMovement[]
-  transactionItems TransactionItem[]
-
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
-}
-
-model StockMovement {
-  id         String   @id @default(cuid())
-  productId  String
-  product    Product  @relation(fields: [productId], references: [id])
-
-  userId     String
-  user       User     @relation(fields: [userId], references: [id])
-
-  type       MovementType
-  quantity   Int
-  note       String?
-
-  createdAt  DateTime @default(now())
-}
+//
+// ENUMS
+//
 
 enum UserRole {
   OWNER
   STAFF
-  CASHIER
+  KASIR
 }
 
 enum MovementType {
@@ -90,7 +23,72 @@ enum MovementType {
   ADJUSTMENT
 }
 
-enum TransactionStatus {
-  COMPLETED
-  CANCELLED
+//
+// MODELS
+//
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      UserRole @default(STAFF)
+
+  transactions   Transaction[]
+  stockMovements StockMovement[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Product {
+  id        String  @id @default(uuid())
+  name      String
+  price     Int
+  stock     Int     @default(0)
+  isActive  Boolean @default(true)
+
+  transactionItems TransactionItem[]
+  stockMovements   StockMovement[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Transaction {
+  id        String   @id @default(uuid())
+  userId    String
+  total     Int
+  createdAt DateTime @default(now())
+
+  user  User              @relation(fields: [userId], references: [id])
+  items TransactionItem[]
+}
+
+model TransactionItem {
+  id            String @id @default(uuid())
+  transactionId String
+  productId     String
+
+  quantity Int
+  price    Int
+  subtotal Int
+
+  transaction Transaction @relation(fields: [transactionId], references: [id])
+  product     Product     @relation(fields: [productId], references: [id])
+}
+
+model StockMovement {
+  id        String @id @default(uuid())
+  productId String
+  userId    String
+
+  type     MovementType
+  quantity Int
+  note     String?
+
+  product Product @relation(fields: [productId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
 }
