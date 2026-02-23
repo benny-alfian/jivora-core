@@ -11,22 +11,20 @@ dotenv.config();
 
 const app = express();
 
-// IMPORTANT: Railway injects dynamic PORT
-const PORT = process.env.PORT
-  ? parseInt(process.env.PORT, 10)
-  : 8080;
+// ===============================
+// CONFIG PORT (Railway fixed 3000)
+// ===============================
+const PORT = 3000;
 
 // ===============================
 // MIDDLEWARE
 // ===============================
-
 app.use(cors());
 app.use(express.json());
 
 // ===============================
 // HEALTH CHECK
 // ===============================
-
 app.get("/", (_req, res) => {
   res.json({
     message: "🚀 Jivora Core API is running",
@@ -38,7 +36,6 @@ app.get("/", (_req, res) => {
 // ===============================
 // ROUTES
 // ===============================
-
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/transactions", transactionRoutes);
@@ -47,7 +44,6 @@ app.use("/api/reports", reportRoutes);
 // ===============================
 // 404 HANDLER
 // ===============================
-
 app.use((_req, res) => {
   res.status(404).json({
     message: "Route not found",
@@ -57,7 +53,6 @@ app.use((_req, res) => {
 // ===============================
 // GLOBAL ERROR HANDLER
 // ===============================
-
 app.use(
   (
     err: any,
@@ -66,7 +61,6 @@ app.use(
     _next: express.NextFunction
   ) => {
     console.error("❌ Global Error:", err);
-
     res.status(err.status || 500).json({
       message: err.message || "Internal Server Error",
     });
@@ -76,7 +70,6 @@ app.use(
 // ===============================
 // START SERVER
 // ===============================
-
 app.listen(PORT, () => {
   console.log(`🔥 Server running on port ${PORT}`);
 });

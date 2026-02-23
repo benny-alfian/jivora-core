@@ -12,10 +12,10 @@ const transaction_routes_1 = __importDefault(require("./routes/transaction.route
 const report_routes_1 = __importDefault(require("./routes/report.routes"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
-// IMPORTANT: Railway injects dynamic PORT
-const PORT = process.env.PORT
-    ? parseInt(process.env.PORT, 10)
-    : 8080;
+// ===============================
+// CONFIG PORT (Railway fixed 3000)
+// ===============================
+const PORT = 3000;
 // ===============================
 // MIDDLEWARE
 // ===============================
