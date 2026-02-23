@@ -9,49 +9,67 @@ import reportRoutes from "./routes/report.routes";
 const app = express();
 
 /**
+ * =========================
  * Middlewares
+ * =========================
  */
 app.use(cors());
-app.use(express.json())
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 /**
+ * =========================
  * Health Check
+ * =========================
  */
-app.get("/health", (req, res) => {
+app.get("/", (_req, res) => {
+  res.status(200).json({
+    message: "🚀 Jivora Core API is running",
+    version: "1.0.0",
+    status: "OK",
+  });
+});
+
+app.get("/health", (_req, res) => {
   res.status(200).json({ status: "ok" });
 });
 
 /**
- * Routes
+ * =========================
+ * Routes (API Prefix)
+ * =========================
  */
-app.use("/auth", authRoutes);
-app.use("/products", productRoutes);
-app.use("/transactions", transactionRoutes);
-app.use("/reports", reportRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/transactions", transactionRoutes);
+app.use("/api/reports", reportRoutes);
 
 /**
+ * =========================
  * 404 Handler
+ * =========================
  */
-app.use((req, res) => {
+app.use((_req, res) => {
   res.status(404).json({
     message: "Route not found",
   });
 });
 
 /**
+ * =========================
  * Global Error Handler
+ * =========================
  */
 app.use(
   (
     err: any,
-    req: express.Request,
+    _req: express.Request,
     res: express.Response,
-    next: express.NextFunction
+    _next: express.NextFunction
   ) => {
-    console.error(err);
+    console.error("❌ Global Error:", err);
 
-    res.status(500).json({
+    res.status(err.status || 500).json({
       message: err.message || "Internal Server Error",
     });
   }
