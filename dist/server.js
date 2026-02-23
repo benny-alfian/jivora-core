@@ -12,11 +12,18 @@ const transaction_routes_1 = __importDefault(require("./routes/transaction.route
 const report_routes_1 = __importDefault(require("./routes/report.routes"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
-// ✅ WAJIB parse ke number
-const PORT = Number(process.env.PORT) || 8080;
+// IMPORTANT: Railway injects dynamic PORT
+const PORT = process.env.PORT
+    ? parseInt(process.env.PORT, 10)
+    : 8080;
+// ===============================
+// MIDDLEWARE
+// ===============================
 app.use((0, cors_1.default)());
 app.use(express_1.default.json());
-// Health check
+// ===============================
+// HEALTH CHECK
+// ===============================
 app.get("/", (_req, res) => {
     res.json({
         message: "🚀 Jivora Core API is running",
@@ -24,23 +31,33 @@ app.get("/", (_req, res) => {
         status: "OK",
     });
 });
-// Routes
+// ===============================
+// ROUTES
+// ===============================
 app.use("/api/auth", auth_routes_1.default);
 app.use("/api/products", product_routes_1.default);
 app.use("/api/transactions", transaction_routes_1.default);
 app.use("/api/reports", report_routes_1.default);
-// 404
+// ===============================
+// 404 HANDLER
+// ===============================
 app.use((_req, res) => {
-    res.status(404).json({ message: "Route not found" });
+    res.status(404).json({
+        message: "Route not found",
+    });
 });
-// Global error
+// ===============================
+// GLOBAL ERROR HANDLER
+// ===============================
 app.use((err, _req, res, _next) => {
     console.error("❌ Global Error:", err);
     res.status(err.status || 500).json({
         message: err.message || "Internal Server Error",
     });
 });
-// ✅ Railway compatible listen
-app.listen(PORT, "0.0.0.0", () => {
+// ===============================
+// START SERVER
+// ===============================
+app.listen(PORT, () => {
     console.log(`🔥 Server running on port ${PORT}`);
 });
