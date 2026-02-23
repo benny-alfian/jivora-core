@@ -3,7 +3,7 @@ import { MovementType } from "@prisma/client";
 
 interface TransactionInput {
   userId: string;
-  items: {
+  items: {p
     productId: string;
     quantity: number;
   }[];
