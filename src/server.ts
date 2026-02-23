@@ -10,19 +10,14 @@ import reportRoutes from "./routes/report.routes";
 dotenv.config();
 
 const app = express();
-const PORT = Number(process.env.PORT) || 8080;
 
-// ===============================
-// GLOBAL MIDDLEWARE
-// ===============================
+// ✅ WAJIB parse ke number
+const PORT = Number(process.env.PORT) || 8080;
 
 app.use(cors());
 app.use(express.json());
 
-// ===============================
-// HEALTH CHECK
-// ===============================
-
+// Health check
 app.get("/", (_req, res) => {
   res.json({
     message: "🚀 Jivora Core API is running",
@@ -31,48 +26,33 @@ app.get("/", (_req, res) => {
   });
 });
 
-// ===============================
-// API ROUTES
-// ===============================
-
+// Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/reports", reportRoutes);
 
-// ===============================
-// 404 HANDLER
-// ===============================
-
+// 404
 app.use((_req, res) => {
-  res.status(404).json({
-    message: "Route not found",
-  });
+  res.status(404).json({ message: "Route not found" });
 });
 
-// ===============================
-// GLOBAL ERROR HANDLER
-// ===============================
-
+// Global error
 app.use(
   (
     err: any,
     _req: express.Request,
     res: express.Response,
-    _next: express.NextFunction
+    _next: express.NextFunction,
   ) => {
     console.error("❌ Global Error:", err);
-
     res.status(err.status || 500).json({
       message: err.message || "Internal Server Error",
     });
-  }
+  },
 );
 
-// ===============================
-// START SERVER
-// ===============================
-
+// ✅ Railway compatible listen
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🔥 Server running on port ${PORT}`);
 });
