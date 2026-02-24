@@ -6,61 +6,33 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const auth_routes_1 = __importDefault(require("./routes/auth.routes"));
-const product_routes_1 = __importDefault(require("./routes/product.routes"));
-const transaction_routes_1 = __importDefault(require("./routes/transaction.routes"));
-const report_routes_1 = __importDefault(require("./routes/report.routes"));
 const app = (0, express_1.default)();
 /**
- * =========================
  * Middlewares
- * =========================
  */
 app.use((0, cors_1.default)());
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
 /**
- * =========================
  * Health Check
- * =========================
  */
-app.get("/", (_req, res) => {
+app.get("/", (req, res) => {
     res.status(200).json({
         message: "🚀 Jivora Core API is running",
-        version: "1.0.0",
+        version: "2.0.0",
         status: "OK",
     });
 });
-app.get("/health", (_req, res) => {
-    res.status(200).json({ status: "ok" });
-});
 /**
- * =========================
- * Routes (API Prefix)
- * =========================
+ * Routes
  */
 app.use("/api/auth", auth_routes_1.default);
-app.use("/api/products", product_routes_1.default);
-app.use("/api/transactions", transaction_routes_1.default);
-app.use("/api/reports", report_routes_1.default);
 /**
- * =========================
  * 404 Handler
- * =========================
  */
-app.use((_req, res) => {
+app.use((req, res) => {
     res.status(404).json({
         message: "Route not found",
-    });
-});
-/**
- * =========================
- * Global Error Handler
- * =========================
- */
-app.use((err, _req, res, _next) => {
-    console.error("❌ Global Error:", err);
-    res.status(err.status || 500).json({
-        message: err.message || "Internal Server Error",
     });
 });
 exports.default = app;

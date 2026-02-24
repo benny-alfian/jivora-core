@@ -8,87 +8,155 @@ datasource db {
 }
 
 //
+// ===============================
 // ENUMS
+// ===============================
 //
 
-enum UserRole {
+enum GlobalRole {
+  FOUNDER
+  PLATFORM_ADMIN
+  SUPPORT_ADMIN
+}
+
+enum TenantRole {
   OWNER
+  MANAGER
   STAFF
-  KASIR
+  CASHIER
 }
 
-enum MovementType {
-  IN
-  OUT
-  ADJUSTMENT
+enum Plan {
+  BASIC
+  GROWTH
+  PRO
+  ENTERPRISE
+}
+
+enum TenantStatus {
+  ACTIVE
+  SUSPENDED
+  MAINTENANCE
+}
+
+enum TransactionStatus {
+  PAID
+  PENDING
+  CANCELLED
 }
 
 //
-// MODELS
+// ===============================
+// PLATFORM USER (GLOBAL LEVEL)
+// ===============================
+//
+
+model PlatformUser {
+  id        String     @id @default(uuid())
+  name      String
+  email     String     @unique
+  password  String
+  role      GlobalRole
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+//
+// ===============================
+// TENANT (BUSINESS)
+// ===============================
+//
+
+model Tenant {
+  id        String        @id @default(uuid())
+  name      String
+  plan      Plan          @default(BASIC)
+  status    TenantStatus  @default(ACTIVE)
+
+  users        User[]
+  products     Product[]
+  transactions Transaction[]
+  auditLogs    AuditLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+//
+// ===============================
+// TENANT USER
+// ===============================
 //
 
 model User {
-  id        String   @id @default(uuid())
+  id        String      @id @default(uuid())
   name      String
-  email     String   @unique
+  email     String
   password  String
-  role      UserRole @default(STAFF)
+  role      TenantRole  @default(STAFF)
 
-  transactions   Transaction[]
-  stockMovements StockMovement[]
+  tenantId  String
+  tenant    Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([email, tenantId])
 }
+
+//
+// ===============================
+// PRODUCT
+// ===============================
+//
 
 model Product {
-  id        String  @id @default(uuid())
+  id        String   @id @default(uuid())
   name      String
   price     Int
-  stock     Int     @default(0)
-  isActive  Boolean @default(true)
+  stock     Int
 
-  transactionItems TransactionItem[]
-  stockMovements   StockMovement[]
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
+//
+// ===============================
+// TRANSACTION
+// ===============================
+//
+
 model Transaction {
-  id        String   @id @default(uuid())
-  userId    String
+  id        String            @id @default(uuid())
   total     Int
-  createdAt DateTime @default(now())
+  status    TransactionStatus @default(PAID)
 
-  user  User              @relation(fields: [userId], references: [id])
-  items TransactionItem[]
-}
-
-model TransactionItem {
-  id            String @id @default(uuid())
-  transactionId String
-  productId     String
-
-  quantity Int
-  price    Int
-  subtotal Int
-
-  transaction Transaction @relation(fields: [transactionId], references: [id])
-  product     Product     @relation(fields: [productId], references: [id])
-}
-
-model StockMovement {
-  id        String @id @default(uuid())
-  productId String
-  userId    String
-
-  type     MovementType
-  quantity Int
-  note     String?
-
-  product Product @relation(fields: [productId], references: [id])
-  user    User    @relation(fields: [userId], references: [id])
+  tenantId  String
+  tenant    Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+//
+// ===============================
+// AUDIT LOG (FOUNDATION)
+// ===============================
+//
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  action      String
+  entity      String
+  entityId    String?
+  performedBy String
+  metadata    Json?
+
+  tenantId    String?
+  tenant      Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
 }

@@ -3,33 +3,53 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.authorizeRoles = exports.authMiddleware = void 0;
+exports.authorize = exports.authenticate = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const authMiddleware = (req, res, next) => {
+/**
+ * 🔐 Authenticate Middleware
+ * - Verifies JWT
+ * - Attaches decoded payload to req.user
+ */
+const authenticate = (req, res, next) => {
     const authHeader = req.headers.authorization;
-    if (!authHeader) {
-        return res.status(401).json({ message: "Unauthorized" });
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({
+            message: "Unauthorized - No token provided",
+        });
     }
     const token = authHeader.split(" ")[1];
+    if (!process.env.JWT_SECRET) {
+        return res.status(500).json({
+            message: "JWT secret not configured",
+        });
+    }
     try {
         const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET);
-        req.user = {
-            id: decoded.userId,
-            role: decoded.role,
-        };
+        req.user = decoded;
         next();
     }
     catch {
-        return res.status(401).json({ message: "Invalid token" });
+        return res.status(401).json({
+            message: "Unauthorized - Invalid or expired token",
+        });
     }
 };
-exports.authMiddleware = authMiddleware;
-const authorizeRoles = (...roles) => {
-    return (req, res, next) => {
-        if (!req.user || !roles.includes(req.user.role)) {
-            return res.status(403).json({ message: "Forbidden" });
-        }
-        next();
-    };
+exports.authenticate = authenticate;
+/**
+ * 👑 Authorize Middleware
+ * - Restricts access by role
+ */
+const authorize = (...allowedRoles) => (req, res, next) => {
+    if (!req.user) {
+        return res.status(401).json({
+            message: "Unauthorized",
+        });
+    }
+    if (!allowedRoles.includes(req.user.role)) {
+        return res.status(403).json({
+            message: "Forbidden - Access denied",
+        });
+    }
+    next();
 };
-exports.authorizeRoles = authorizeRoles;
+exports.authorize = authorize;

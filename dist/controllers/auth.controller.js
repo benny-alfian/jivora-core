@@ -1,52 +1,25 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthController = void 0;
-const bcryptjs_1 = __importDefault(require("bcryptjs"));
-const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const prisma_1 = require("../lib/prisma");
+const auth_service_1 = require("../services/auth.service");
 class AuthController {
-    /**
-     * =========================
-     * REGISTER
-     * =========================
-     */
     static async register(req, res) {
         try {
-            const { name, email, password } = req.body;
-            if (!name || !email || !password) {
+            const { tenantName, name, email, password } = req.body;
+            if (!tenantName || !name || !email || !password) {
                 return res.status(400).json({
-                    message: "Name, email, and password are required",
+                    message: "All fields are required",
                 });
             }
-            // Check if user already exists
-            const existingUser = await prisma_1.prisma.user.findUnique({
-                where: { email },
-            });
-            if (existingUser) {
-                return res.status(400).json({
-                    message: "Email already registered",
-                });
-            }
-            // Hash password
-            const hashedPassword = await bcryptjs_1.default.hash(password, 10);
-            // Create user
-            const user = await prisma_1.prisma.user.create({
-                data: {
-                    name,
-                    email,
-                    password: hashedPassword,
-                },
+            const result = await auth_service_1.AuthService.register({
+                tenantName,
+                name,
+                email,
+                password,
             });
             return res.status(201).json({
-                message: "User registered successfully",
-                user: {
-                    id: user.id,
-                    name: user.name,
-                    email: user.email,
-                },
+                message: "Tenant registered successfully",
+                data: result,
             });
         }
         catch (error) {
@@ -56,11 +29,6 @@ class AuthController {
             });
         }
     }
-    /**
-     * =========================
-     * LOGIN
-     * =========================
-     */
     static async login(req, res) {
         try {
             const { email, password } = req.body;
@@ -69,38 +37,18 @@ class AuthController {
                     message: "Email and password are required",
                 });
             }
-            // Find user
-            const user = await prisma_1.prisma.user.findUnique({
-                where: { email },
+            const result = await auth_service_1.AuthService.login({
+                email,
+                password,
             });
-            if (!user) {
-                return res.status(401).json({
-                    message: "Invalid email or password",
-                });
-            }
-            // Compare password
-            const isPasswordValid = await bcryptjs_1.default.compare(password, user.password);
-            if (!isPasswordValid) {
-                return res.status(401).json({
-                    message: "Invalid email or password",
-                });
-            }
-            // Generate JWT
-            const token = jsonwebtoken_1.default.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: "7d" });
             return res.status(200).json({
                 message: "Login successful",
-                token,
-                user: {
-                    id: user.id,
-                    name: user.name,
-                    email: user.email,
-                },
+                data: result,
             });
         }
         catch (error) {
-            console.error("Login Error:", error);
-            return res.status(500).json({
-                message: error.message || "Internal Server Error",
+            return res.status(401).json({
+                message: error.message || "Invalid credentials",
             });
         }
     }
