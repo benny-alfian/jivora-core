@@ -1,66 +1,41 @@
-import prisma from "../lib/prisma";
-import { Prisma } from "@prisma/client";
-import bcrypt from "bcryptjs";
+import { prisma } from "../lib/prisma";
+import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
-interface RegisterInput {
-  tenantName: string;
-  name: string;
-  email: string;
-  password: string;
-}
+class AuthService {
+  async register(data: {
+    name: string;
+    email: string;
+    password: string;
+  }) {
+    const existingUser = await prisma.user.findUnique({
+      where: { email: data.email },
+    });
 
-interface LoginInput {
-  email: string;
-  password: string;
-}
+    if (existingUser) {
+      throw new Error("Email already registered");
+    }
 
-export class AuthService {
-  // ===============================
-  // REGISTER (Create Tenant + Owner)
-  // ===============================
-  static async register(data: RegisterInput) {
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
-    const result = await prisma.$transaction(
-      async (tx: Prisma.TransactionClient) => {
-        const tenant = await tx.tenant.create({
-          data: {
-            name: data.tenantName,
-            plan: "BASIC",
-            status: "ACTIVE",
-          },
-        });
-
-        const user = await tx.user.create({
-          data: {
-            name: data.name,
-            email: data.email,
-            password: hashedPassword,
-            role: "OWNER",
-            tenantId: tenant.id,
-          },
-        });
-
-        return { tenant, user };
-      }
-    );
-
-    return result;
-  }
-
-  // ===============================
-  // LOGIN
-  // ===============================
-  static async login(data: LoginInput) {
-    const user = await prisma.user.findFirst({
-      where: {
+    const user = await prisma.user.create({
+      data: {
+        name: data.name,
         email: data.email,
+        password: hashedPassword,
       },
     });
 
+    return user;
+  }
+
+  async login(data: { email: string; password: string }) {
+    const user = await prisma.user.findUnique({
+      where: { email: data.email },
+    });
+
     if (!user) {
-      throw new Error("User not found");
+      throw new Error("Invalid email or password");
     }
 
     const isPasswordValid = await bcrypt.compare(
@@ -69,20 +44,12 @@ export class AuthService {
     );
 
     if (!isPasswordValid) {
-      throw new Error("Invalid password");
-    }
-
-    if (!process.env.JWT_SECRET) {
-      throw new Error("JWT_SECRET is not defined");
+      throw new Error("Invalid email or password");
     }
 
     const token = jwt.sign(
-      {
-        userId: user.id,
-        tenantId: user.tenantId,
-        role: user.role,
-      },
-      process.env.JWT_SECRET,
+      { userId: user.id },
+      process.env.JWT_SECRET as string,
       { expiresIn: "1d" }
     );
 
@@ -91,9 +58,10 @@ export class AuthService {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role,
       },
       token,
     };
   }
 }
+
+export const authService = new AuthService();

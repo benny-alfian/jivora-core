@@ -2,39 +2,19 @@ import express from "express";
 import cors from "cors";
 
 import authRoutes from "./routes/auth.routes";
+import usersRoutes from "./modules/users/users.routes";
+import productsRoutes from "./modules/products/products.routes";
 
 const app = express();
 
-/**
- * Middlewares
- */
 app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-/**
- * Health Check
- */
-app.get("/", (req, res) => {
-  res.status(200).json({
-    message: "🚀 Jivora Core API is running",
-    version: "2.0.0",
-    status: "OK",
-  });
-});
-
-/**
- * Routes
- */
+// Public
 app.use("/api/auth", authRoutes);
 
-/**
- * 404 Handler
- */
-app.use((req, res) => {
-  res.status(404).json({
-    message: "Route not found",
-  });
-});
+// Modules
+app.use("/api/users", usersRoutes);
+app.use("/api/products", productsRoutes);
 
 export default app;

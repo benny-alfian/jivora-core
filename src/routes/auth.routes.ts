@@ -1,16 +1,10 @@
 import { Router } from "express";
-import { AuthController } from "../controllers/auth.controller";
+import * as authController from "../controllers/auth.controller";
 
 const router = Router();
 
-/**
- * Auth Routes
- */
-
-// Register Tenant + Owner
-router.post("/register", AuthController.register);
-
-// Login User
-router.post("/login", AuthController.login);
+// PUBLIC ROUTES (tidak pakai middleware)
+router.post("/register", authController.register);
+router.post("/login", authController.login);
 
 export default router;
