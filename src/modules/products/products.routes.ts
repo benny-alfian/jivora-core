@@ -4,12 +4,12 @@ import { authMiddleware } from "../../middlewares/auth.middleware";
 
 const router = Router();
 
-/**
- * Protected Routes
- * Base: /api/products
- */
+router.use(authMiddleware);
 
-router.post("/", authMiddleware, productController.create);
-router.get("/", authMiddleware, productController.getAll);
+router.post("/", productController.createProduct);
+router.get("/", productController.getProducts);
+router.get("/:id", productController.getProductById);
+router.patch("/:id", productController.updateProduct);
+router.delete("/:id", productController.deleteProduct);
 
 export default router;

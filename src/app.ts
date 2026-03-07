@@ -1,20 +1,23 @@
 import express from "express";
 import cors from "cors";
 
-import authRoutes from "./routes/auth.routes";
-import usersRoutes from "./modules/users/users.routes";
-import productsRoutes from "./modules/products/products.routes";
+import authRoutes from "./modules/auth/auth.routes";
+import userRoutes from "./modules/users/users.routes";
+import productRoutes from "./modules/products/products.routes";
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-// Public
-app.use("/api/auth", authRoutes);
+app.get("/", (_req, res) => {
+  res.json({
+    message: "Jivora Core API running",
+  });
+});
 
-// Modules
-app.use("/api/users", usersRoutes);
-app.use("/api/products", productsRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/products", productRoutes);
 
 export default app;
